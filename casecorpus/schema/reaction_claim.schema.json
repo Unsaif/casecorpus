@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://casecorpus/schema/reaction_claim/v0.1",
+  "title": "ReactionClaimSet",
+  "description": "Literature claims about metabolic reactions, transport, localization, presence/absence and quantitative physiology, as stated in ONE publication. Claims are what the paper says; the assertion layer (reconevidence) decides what the reconstruction believes. Every claim carries a verbatim evidence span.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["organisms", "claims", "narrative_anchors"],
+  "$defs": {
+    "evidence": {"type": "object", "additionalProperties": false, "required": ["quote", "anchor"],
+                 "properties": {"quote": {"type": "string"}, "anchor": {"type": "string"},
+                                "verification": {"type": ["object", "null"], "additionalProperties": false, "properties": {"anchor_exists": {"type": "boolean"}, "in_anchor": {"type": "boolean"}, "in_document": {"type": "boolean"}, "offset": {"type": ["array", "null"], "items": {"type": "integer"}}}}}},
+    "participant": {"type": "object", "additionalProperties": false, "required": ["name_as_written", "role"],
+                    "properties": {"name_as_written": {"type": "string"}, "role": {"type": "string", "enum": ["substrate", "product", "cofactor", "inhibitor", "activator", "transported", "coupled_ion"]},
+                                   "stoichiometry": {"type": ["number", "null"]}, "chebi": {"type": ["string", "null"]}, "smiles_as_written": {"type": ["string", "null"]},
+                                   "compartment_as_written": {"type": ["string", "null"]}, "grounding": {"type": ["object", "null"]}}},
+    "quantity": {"type": "object", "additionalProperties": false, "required": ["kind", "evidence"],
+                 "properties": {"kind": {"type": "string", "enum": ["Km", "kcat", "Vmax", "Ki", "IC50", "specific_activity", "flux", "uptake_rate", "secretion_rate", "growth_rate", "yield", "concentration", "pH_optimum", "temperature", "other"]},
+                                "value": {"type": ["number", "null"]}, "value_text": {"type": ["string", "null"]}, "unit": {"type": ["string", "null"]}, "unit_ucum": {"type": ["string", "null"]},
+                                "for_participant": {"type": ["string", "null"]}, "conditions": {"type": ["string", "null"]}, "evidence": {"$ref": "#/$defs/evidence"}}}
+  },
+  "properties": {
+    "organisms": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["name_as_written"],
+                  "properties": {"name_as_written": {"type": "string"}, "ncbi_taxon": {"type": ["string", "null"]}, "strain": {"type": ["string", "null"]}, "is_human": {"type": ["boolean", "null"]}}}},
+    "claims": {"type": "array", "items": {"type": "object", "additionalProperties": false,
+      "required": ["claim_type", "organism", "evidence_type", "evidence", "as_stated"],
+      "properties": {
+        "claim_type": {"type": "string", "enum": ["enzyme_activity", "transport", "localization", "presence", "absence", "directionality", "regulation", "physiology", "disease_mechanism"]},
+        "as_stated": {"type": "string", "description": "One-sentence restatement of the claim in the authors' terms."},
+        "organism": {"type": "string", "description": "name_as_written of the organism the claim is about."},
+        "tissue_or_cell_type": {"type": ["string", "null"]},
+        "uberon_or_cl": {"type": ["string", "null"]},
+        "compartment_as_written": {"type": ["string", "null"]},
+        "go_cc": {"type": ["string", "null"]},
+        "enzyme": {"type": ["object", "null"], "additionalProperties": false,
+                   "properties": {"name_as_written": {"type": ["string", "null"]}, "gene_symbol": {"type": ["string", "null"]}, "uniprot": {"type": ["string", "null"]}, "ec_number": {"type": ["string", "null"]}, "subunits_or_complex": {"type": ["string", "null"]}}},
+        "participants": {"type": "array", "items": {"$ref": "#/$defs/participant"}},
+        "equation_as_written": {"type": ["string", "null"]},
+        "direction_as_stated": {"type": ["string", "null"], "enum": ["forward", "reverse", "reversible", "irreversible_forward", "irreversible_reverse", "not_stated", null]},
+        "transport_mechanism": {"type": ["string", "null"], "enum": ["uniport", "symport", "antiport", "primary_active_ATP", "channel", "diffusion", "vesicular", "not_stated", null]},
+        "rhea_id": {"type": ["string", "null"], "description": "Only when the paper states it or the mapping is certain."},
+        "evidence_type": {"type": "string", "enum": ["purified_enzyme_assay", "crude_extract_assay", "recombinant_expression", "knockout_or_knockdown", "patient_deficiency", "isotope_tracing", "flux_measurement", "transport_assay", "proteomics", "immunolocalization", "transcript_only", "computational", "review_statement", "other"]},
+        "eco_code": {"type": ["string", "null"], "description": "ECO evidence ontology code, filled by ingest from evidence_type."},
+        "quantities": {"type": "array", "items": {"$ref": "#/$defs/quantity"}},
+        "conditions": {"type": ["string", "null"]},
+        "negated": {"type": "boolean", "default": false, "description": "True for explicit absence / no activity claims."},
+        "evidence": {"$ref": "#/$defs/evidence"},
+        "extractor_notes": {"type": "array", "items": {"type": "string"}}
+      }}},
+    "narrative_anchors": {"type": "array", "items": {"type": "string"}, "description": "Every unit (paragraph, table row/column) that carries the experimental evidence for the claims — methods and results, not introduction."},
+    "extractor_notes": {"type": "array", "items": {"type": "string"}}
+  }
+}
