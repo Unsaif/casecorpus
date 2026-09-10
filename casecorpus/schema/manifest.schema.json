@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://casecorpus/schema/manifest/v0.1",
+  "title": "DocumentManifest",
+  "description": "Triage decision for one publication: is it in scope, and which individuals does it describe?",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["in_scope", "document_type", "individuals", "reasons"],
+  "properties": {
+    "in_scope": {"type": "boolean", "description": "True if the document describes at least one individual human with a stated/suspected/revised diagnosis in the disease scope, with phenotypic, biochemical or genetic findings."},
+    "document_type": {"type": "string", "enum": ["case_report", "case_series", "cohort_with_individual_data", "review_with_case", "family_study", "other"]},
+    "reasons": {"type": "string", "description": "One or two sentences justifying the decision."},
+    "scope_diseases_mentioned": {"type": "array", "items": {"type": "string"}, "description": "Disease names in the disease scope that the document is about."},
+    "languages": {"type": "array", "items": {"type": "string"}},
+    "individuals": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["local_id", "where"],
+        "properties": {
+          "local_id": {"type": "string", "description": "Identifier as used in the paper. Use 'the patient' when a single unnamed patient is described."},
+          "where": {"type": "array", "items": {"type": "string"}, "description": "Anchors where this individual's data live: 'abstract', 'sec:<n>', 'tab:<n> r<i>' (row-wise) or 'tab:<n> c<j>' (column-wise)."},
+          "family_id": {"type": ["string", "null"]},
+          "is_affected": {"type": "boolean", "description": "False for unaffected relatives mentioned only for context."},
+          "is_rereport": {"type": "boolean", "description": "True if the paper states this individual was described in an earlier publication."},
+          "rereport_reference": {"type": ["string", "null"], "description": "Citation text or PMID of the earlier report."}
+        }
+      }
+    },
+    "has_individual_level_table": {"type": "boolean"},
+    "notes": {"type": "array", "items": {"type": "string"}}
+  }
+}

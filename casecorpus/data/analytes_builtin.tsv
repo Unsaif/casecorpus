@@ -1,0 +1,145 @@
+label	synonyms	chebi	vmh	kind
+ammonia	ammonium|NH3|NH4|plasma ammonia|blood ammonia	CHEBI:16134	nh4	metabolite
+L-glutamine	glutamine|Gln	CHEBI:18050	gln_L	metabolite
+glycine	Gly	CHEBI:15428	gly	metabolite
+L-alanine	alanine|Ala	CHEBI:16977	ala_L	metabolite
+L-leucine	leucine|Leu	CHEBI:15603	leu_L	metabolite
+L-isoleucine	isoleucine|Ile	CHEBI:17191	ile_L	metabolite
+L-valine	valine|Val	CHEBI:16414	val_L	metabolite
+L-alloisoleucine	alloisoleucine|allo-isoleucine			metabolite
+L-phenylalanine	phenylalanine|Phe	CHEBI:17295	phe_L	metabolite
+L-tyrosine	tyrosine|Tyr	CHEBI:17895	tyr_L	metabolite
+L-methionine	methionine|Met	CHEBI:16643	met_L	metabolite
+L-citrulline	citrulline|Cit	CHEBI:16349	citr_L	metabolite
+L-arginine	arginine|Arg	CHEBI:16467	arg_L	metabolite
+L-ornithine	ornithine|Orn	CHEBI:15729	orn	metabolite
+L-lysine	lysine|Lys	CHEBI:18019	lys_L	metabolite
+L-proline	proline|Pro	CHEBI:17203	pro_L	metabolite
+L-serine	serine|Ser	CHEBI:17115	ser_L	metabolite
+L-threonine	threonine|Thr	CHEBI:16857	thr_L	metabolite
+L-histidine	histidine|His	CHEBI:15971	his_L	metabolite
+L-tryptophan	tryptophan|Trp	CHEBI:16828	trp_L	metabolite
+L-glutamate	glutamate|glutamic acid|Glu	CHEBI:16015	glu_L	metabolite
+L-aspartate	aspartate|aspartic acid|Asp	CHEBI:17053	asp_L	metabolite
+L-cystine	cystine	CHEBI:16283	Lcystin	metabolite
+homocysteine	total homocysteine|tHcy|Hcy|plasma homocysteine	CHEBI:17588	hcys_L	metabolite
+argininosuccinic acid	argininosuccinate|ASA			metabolite
+orotic acid	orotate|urinary orotic acid|urine orotic acid	CHEBI:16742	orot	metabolite
+methylmalonic acid	methylmalonate|MMA|urinary methylmalonic acid|plasma methylmalonic acid	CHEBI:30860		metabolite
+propionic acid	propionate	CHEBI:30768	ppa	metabolite
+3-hydroxypropionic acid	3-hydroxypropionate|3-OH-propionate			metabolite
+methylcitric acid	methylcitrate|2-methylcitrate			metabolite
+lactate	lactic acid|L-lactate|plasma lactate|blood lactate|serum lactate|CSF lactate	CHEBI:24996	lac_L	metabolite
+pyruvate	pyruvic acid	CHEBI:15361	pyr	metabolite
+lactate/pyruvate ratio	L/P ratio|lactate to pyruvate ratio			ratio
+acetoacetate	acetoacetic acid	CHEBI:13705	acac	metabolite
+3-hydroxybutyrate	beta-hydroxybutyrate|β-hydroxybutyrate|3-OH-butyrate|BHB|3-hydroxybutyric acid	CHEBI:10983	bhb	metabolite
+ketones	ketone bodies|urinary ketones|ketonuria			metabolite
+glucose	blood glucose|plasma glucose|serum glucose|glycaemia|glycemia|D-glucose	CHEBI:17634	glc_D	metabolite
+galactose	D-galactose|blood galactose	CHEBI:28260	gal	metabolite
+galactose-1-phosphate	Gal-1-P|galactose 1-phosphate			metabolite
+galactitol				metabolite
+free carnitine	L-carnitine|carnitine|C0|plasma free carnitine	CHEBI:16347	crn	metabolite
+total carnitine				metabolite
+acylcarnitines	acylcarnitine profile			panel
+acetylcarnitine	C2|C2 acylcarnitine|C2-carnitine			metabolite
+propionylcarnitine	C3|C3 acylcarnitine|C3-carnitine	CHEBI:53210		metabolite
+butyrylcarnitine	C4|C4 acylcarnitine			metabolite
+isovalerylcarnitine	C5|C5 acylcarnitine			metabolite
+tiglylcarnitine	C5:1			metabolite
+3-hydroxyisovalerylcarnitine	C5-OH|C5OH			metabolite
+glutarylcarnitine	C5DC|C5-DC			metabolite
+hexanoylcarnitine	C6			metabolite
+octanoylcarnitine	C8|C8 acylcarnitine			metabolite
+decanoylcarnitine	C10			metabolite
+decenoylcarnitine	C10:1			metabolite
+dodecanoylcarnitine	C12			metabolite
+tetradecanoylcarnitine	C14|myristoylcarnitine			metabolite
+tetradecenoylcarnitine	C14:1			metabolite
+palmitoylcarnitine	C16|hexadecanoylcarnitine			metabolite
+3-hydroxypalmitoylcarnitine	C16-OH|C16OH			metabolite
+octadecanoylcarnitine	C18|stearoylcarnitine			metabolite
+oleoylcarnitine	C18:1			metabolite
+3-hydroxyoleoylcarnitine	C18:1-OH			metabolite
+creatine	Cr	CHEBI:16919	creat	metabolite
+guanidinoacetate	guanidinoacetic acid|GAA			metabolite
+creatinine		CHEBI:16737	crtn	metabolite
+uric acid	urate|serum uric acid|serum urate	CHEBI:17775	urate	metabolite
+bilirubin	total bilirubin	CHEBI:16990	bilirub	metabolite
+conjugated bilirubin	direct bilirubin			metabolite
+cholesterol	total cholesterol	CHEBI:16113	chsterol	metabolite
+7-dehydrocholesterol	7-DHC	CHEBI:17759	7dhchsterol	metabolite
+phytanic acid		CHEBI:16285	phyt	metabolite
+pristanic acid				metabolite
+very long chain fatty acids	VLCFA|VLCFAs			panel
+hexacosanoic acid	C26:0			metabolite
+C26:0/C22:0 ratio				ratio
+C24:0/C22:0 ratio				ratio
+plasmalogens				metabolite
+succinylacetone	SA|urinary succinylacetone			metabolite
+glutaric acid	glutarate			metabolite
+3-hydroxyglutaric acid	3-hydroxyglutarate|3-OH-glutaric acid			metabolite
+2-hydroxyglutaric acid	2-hydroxyglutarate			metabolite
+isovaleric acid	isovalerate			metabolite
+isovalerylglycine				metabolite
+3-methylcrotonylglycine				metabolite
+3-hydroxyisovaleric acid	3-hydroxyisovalerate			metabolite
+ethylmalonic acid	ethylmalonate			metabolite
+adipic acid	adipate			metabolite
+suberic acid	suberate			metabolite
+sebacic acid	sebacate			metabolite
+dicarboxylic acids	dicarboxylic aciduria			panel
+hexanoylglycine				metabolite
+suberylglycine				metabolite
+N-acetylaspartic acid	N-acetylaspartate|NAA			metabolite
+sialic acid	free sialic acid			metabolite
+glycosaminoglycans	GAGs|urinary GAGs|mucopolysaccharides			panel
+oligosaccharides	urinary oligosaccharides			panel
+chitotriosidase				protein_marker
+copper	serum copper	CHEBI:28694	cu2	metabolite
+ceruloplasmin				protein_marker
+zinc	serum zinc			metabolite
+iron	serum iron			metabolite
+ferritin				protein_marker
+transferrin isoelectric focusing	transferrin IEF|CDT			panel
+alpha-fetoprotein	AFP			protein_marker
+alanine aminotransferase	ALT|SGPT			enzyme_marker
+aspartate aminotransferase	AST|SGOT			enzyme_marker
+creatine kinase	CK|CPK			enzyme_marker
+alkaline phosphatase	ALP			enzyme_marker
+gamma-glutamyl transferase	GGT|γ-GT			enzyme_marker
+lactate dehydrogenase	LDH			enzyme_marker
+pH	blood pH|arterial pH			blood_gas
+bicarbonate	HCO3|serum bicarbonate			blood_gas
+anion gap				blood_gas
+base excess				blood_gas
+pCO2				blood_gas
+sodium	Na			electrolyte
+potassium	K			electrolyte
+chloride	Cl			electrolyte
+calcium	Ca|serum calcium			electrolyte
+phosphate	phosphorus|serum phosphate			electrolyte
+magnesium	Mg			electrolyte
+albumin				protein_marker
+haemoglobin	hemoglobin|Hb			haematology
+platelets	platelet count			haematology
+white blood cells	WBC|leukocyte count			haematology
+neutrophils	neutrophil count|ANC			haematology
+insulin				hormone
+C-peptide				hormone
+cortisol				hormone
+thyroid stimulating hormone	TSH			hormone
+free T4	fT4|thyroxine			hormone
+vitamin B12	cobalamin|B12	CHEBI:18303		vitamin
+folate	folic acid			vitamin
+25-hydroxyvitamin D	vitamin D			vitamin
+biotinidase activity	biotinidase			enzyme_activity
+5-methyltetrahydrofolate	5-MTHF|CSF 5-MTHF			metabolite
+homovanillic acid	HVA			metabolite
+5-hydroxyindoleacetic acid	5-HIAA			metabolite
+neopterin				metabolite
+tetrahydrobiopterin	BH4			metabolite
+biopterin				metabolite
+sulfocysteine	S-sulfocysteine|sulphocysteine			metabolite
+xanthine				metabolite
+hypoxanthine				metabolite

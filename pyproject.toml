@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "casecorpus"
+version = "0.1.0"
+description = "Large-scale retrieval and structured extraction of rare-disease case descriptions from the literature (phenotypes, biochemistry, genetics, diagnosis)."
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [{name = "Tim Hulshof"}]
+dependencies = [
+  "requests>=2.31",
+  "pydantic>=2.5",
+  "rapidfuzz>=3.5",
+  "pint>=0.23",
+  "pandas>=2.1",
+  "pyarrow>=14",
+  "lxml>=4.9",
+  "tqdm>=4.66",
+  "typer>=0.9",
+  "jsonschema>=4.20",
+  "phenopackets>=2.0.2",
+]
+
+[project.optional-dependencies]
+llm = ["anthropic>=0.40"]
+dev = ["pytest>=7"]
+
+[project.scripts]
+casecorpus = "casecorpus.cli:app"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["casecorpus*"]
+
+[tool.setuptools.package-data]
+casecorpus = ["schema/*.json", "data/*.tsv", "data/*.json"]

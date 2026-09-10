@@ -1,0 +1,113 @@
+alias	omim
+cobalamin C deficiency	OMIM:277400
+cblC	OMIM:277400
+cblC deficiency	OMIM:277400
+cblC disease	OMIM:277400
+methylmalonic aciduria cblC type	OMIM:277400
+methylmalonic acidemia with homocystinuria cblC type	OMIM:277400
+combined methylmalonic aciduria and homocystinuria cblC	OMIM:277400
+MMA cblC	OMIM:277400
+cobalamin D deficiency	OMIM:277410
+cblD	OMIM:277410
+cobalamin E deficiency	OMIM:236270
+cblE	OMIM:236270
+cobalamin F deficiency	OMIM:277380
+cblF	OMIM:277380
+cobalamin G deficiency	OMIM:250940
+cblG	OMIM:250940
+cobalamin A deficiency	OMIM:251100
+cblA	OMIM:251100
+cobalamin B deficiency	OMIM:251110
+cblB	OMIM:251110
+methylmalonic aciduria mut type	OMIM:251000
+methylmalonic acidemia mut0	OMIM:251000
+mut0 methylmalonic acidemia	OMIM:251000
+isolated methylmalonic acidemia	OMIM:251000
+methylmalonyl-CoA mutase deficiency	OMIM:251000
+MMUT deficiency	OMIM:251000
+propionic acidemia	OMIM:606054
+propionic aciduria	OMIM:606054
+propionyl-CoA carboxylase deficiency	OMIM:606054
+maple syrup urine disease	OMIM:248600
+MSUD	OMIM:248600
+phenylketonuria	OMIM:261600
+PKU	OMIM:261600
+PAH deficiency	OMIM:261600
+hyperphenylalaninemia	OMIM:261600
+ornithine transcarbamylase deficiency	OMIM:311250
+OTC deficiency	OMIM:311250
+OTCD	OMIM:311250
+carbamoyl phosphate synthetase 1 deficiency	OMIM:237300
+CPS1 deficiency	OMIM:237300
+CPS deficiency	OMIM:237300
+citrullinemia type I	OMIM:215700
+classic citrullinemia	OMIM:215700
+argininosuccinate synthetase deficiency	OMIM:215700
+ASS1 deficiency	OMIM:215700
+argininosuccinic aciduria	OMIM:207900
+argininosuccinate lyase deficiency	OMIM:207900
+ASL deficiency	OMIM:207900
+arginase deficiency	OMIM:207800
+argininemia	OMIM:207800
+glutaric aciduria type I	OMIM:231670
+glutaric acidemia type I	OMIM:231670
+GA1	OMIM:231670
+GA-I	OMIM:231670
+glutaryl-CoA dehydrogenase deficiency	OMIM:231670
+isovaleric acidemia	OMIM:243500
+isovaleric aciduria	OMIM:243500
+IVA	OMIM:243500
+medium-chain acyl-CoA dehydrogenase deficiency	OMIM:201450
+MCAD deficiency	OMIM:201450
+MCADD	OMIM:201450
+very long-chain acyl-CoA dehydrogenase deficiency	OMIM:201475
+VLCAD deficiency	OMIM:201475
+VLCADD	OMIM:201475
+long-chain 3-hydroxyacyl-CoA dehydrogenase deficiency	OMIM:609016
+LCHAD deficiency	OMIM:609016
+LCHADD	OMIM:609016
+primary carnitine deficiency	OMIM:212140
+systemic primary carnitine deficiency	OMIM:212140
+carnitine uptake defect	OMIM:212140
+OCTN2 deficiency	OMIM:212140
+HMG-CoA lyase deficiency	OMIM:246450
+3-hydroxy-3-methylglutaryl-CoA lyase deficiency	OMIM:246450
+biotinidase deficiency	OMIM:253260
+holocarboxylase synthetase deficiency	OMIM:253270
+multiple carboxylase deficiency	OMIM:253270
+classic galactosemia	OMIM:230400
+galactosemia	OMIM:230400
+GALT deficiency	OMIM:230400
+tyrosinemia type I	OMIM:276700
+hepatorenal tyrosinemia	OMIM:276700
+alkaptonuria	OMIM:203500
+classical homocystinuria	OMIM:236200
+homocystinuria due to cystathionine beta-synthase deficiency	OMIM:236200
+CBS deficiency	OMIM:236200
+nonketotic hyperglycinemia	OMIM:605899
+glycine encephalopathy	OMIM:605899
+NKH	OMIM:605899
+Gaucher disease type 1	OMIM:230800
+Fabry disease	OMIM:301500
+Pompe disease	OMIM:232300
+glycogen storage disease type II	OMIM:232300
+acid maltase deficiency	OMIM:232300
+Hurler syndrome	OMIM:607014
+mucopolysaccharidosis type I	OMIM:607014
+MPS I	OMIM:607014
+Niemann-Pick disease type C1	OMIM:257220
+X-linked adrenoleukodystrophy	OMIM:300100
+X-ALD	OMIM:300100
+Zellweger syndrome	OMIM:214100
+Wilson disease	OMIM:277900
+hepatolenticular degeneration	OMIM:277900
+Menkes disease	OMIM:309400
+GLUT1 deficiency syndrome	OMIM:606777
+glucose transporter type 1 deficiency	OMIM:606777
+pyruvate dehydrogenase E1-alpha deficiency	OMIM:312170
+PDHA1 deficiency	OMIM:312170
+Leigh syndrome	OMIM:256000
+MELAS	OMIM:540000
+MELAS syndrome	OMIM:540000
+Smith-Lemli-Opitz syndrome	OMIM:270400
+SLOS	OMIM:270400
