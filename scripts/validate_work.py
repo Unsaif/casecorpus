@@ -6,6 +6,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from casecorpus.validate import validate_manifest, validate_record  # noqa: E402
+from casecorpus.anchors import index_markdown, verify_quote  # noqa: E402
 
 
 def slug(s: str) -> str:
@@ -35,16 +36,26 @@ if manifest.get("in_scope"):
             if i["severity"] == "error":
                 ok = False
             print(rp.name, i["severity"], i["path"], i["msg"])
-        # evidence quotes must occur in the source text (whitespace-insensitive)
-        src = re.sub(r"\s+", " ", (wd / "input.md").read_text())
-        n_missing = 0
+        # evidence quotes must occur verbatim in the source, ideally inside the anchored unit
+        md = (wd / "input.md").read_text()
+        idx = index_markdown(md)
+        n_missing = n_wrong_anchor = 0
         for section in ("phenotypes", "measurements", "genetic_findings", "diagnoses", "treatments", "enzyme_activities"):
             for j, item in enumerate(rec.get(section, [])):
-                q = re.sub(r"\s+", " ", (item.get("evidence") or {}).get("quote", "")).strip()
-                if q and q[:80] not in src:
+                ev = item.get("evidence") or {}
+                v = verify_quote(ev.get("quote", ""), ev.get("anchor", ""), idx, md)
+                if not v["in_document"]:
                     n_missing += 1
-                    print(rp.name, "warn", f"{section}/{j}/evidence/quote", "quote not found verbatim in source:", q[:60])
+                    print(rp.name, "warn", f"{section}/{j}/evidence/quote", "quote not found verbatim in source:", ev.get("quote", "")[:60])
+                elif not v["in_anchor"]:
+                    n_wrong_anchor += 1
+                    print(rp.name, "info", f"{section}/{j}/evidence/anchor", f"quote found in document but not in anchor {ev.get('anchor')!r}")
+        bad = [a for a in rec.get("narrative_anchors", []) if not idx.expand(a)]
+        if not rec.get("narrative_anchors"):
+            print(rp.name, "warn", "narrative_anchors", "missing — list every paragraph/table unit describing this individual")
+        for a in bad:
+            print(rp.name, "warn", "narrative_anchors", f"anchor does not resolve: {a!r}")
         print(rp.name, "summary:", len(rec.get("phenotypes", [])), "phenotypes,", len(rec.get("measurements", [])), "measurements,",
-              len(rec.get("genetic_findings", [])), "variants,", len(rec.get("diagnoses", [])), "diagnoses;", n_missing, "quotes not verbatim")
+              len(rec.get("genetic_findings", [])), "variants,", len(rec.get("diagnoses", [])), "diagnoses;", n_missing, "quotes not verbatim;", n_wrong_anchor, "quotes outside their anchor;", len(rec.get("narrative_anchors", [])), "narrative anchors")
 print("OK" if ok else "ISSUES")
 sys.exit(0 if ok else 1)

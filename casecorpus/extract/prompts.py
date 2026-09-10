@@ -7,7 +7,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-PROMPT_VERSION = "0.1.0"
+PROMPT_VERSION = "0.2.0"
 SCHEMA_DIR = Path(__file__).resolve().parent.parent / "schema"
 RECORD_SCHEMA = json.load(open(SCHEMA_DIR / "record.schema.json"))
 MANIFEST_SCHEMA = json.load(open(SCHEMA_DIR / "manifest.schema.json"))
@@ -36,6 +36,7 @@ Rules
 8. If text and a table disagree, extract both and add an extractor_note.
 9. Phenotype text: short clinical phrases in HPO style (e.g. "Global developmental delay", "Metabolic acidosis", "Hepatomegaly"), one finding per item, no bundling.
 10. clinical_summary: 3-6 neutral sentences built only from the extracted facts.
+11. narrative_anchors: list EVERY unit of the source that describes this individual, in document order — the abstract if it describes them, each paragraph anchor 'sec:N ¶M' of the case presentation / history / examination / investigations / genetics / treatment / follow-up, and each table row 'tab:N rI' or column 'tab:N cJ' holding their data. This becomes the full, verbatim patient description; completeness matters more than brevity. In multi-patient papers include only the units about THIS individual (a paragraph that covers several individuals is included for each of them). Do not paraphrase or copy the text — anchors only; the text is assembled from the source.
 
 Answer ONLY with a JSON object matching this schema (no prose):
 {record_schema}"""

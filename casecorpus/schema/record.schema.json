@@ -5,209 +5,961 @@
   "description": "One individual described in one publication. Every clinical fact carries an evidence span (verbatim quote + anchor in the source rendering). Grounded identifiers are filled by deterministic tools after extraction; the extractor supplies text plus, at most, a best-guess id.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["local_id", "subject", "phenotypes", "measurements", "genetic_findings", "diagnoses"],
+  "required": [
+    "local_id",
+    "subject",
+    "phenotypes",
+    "measurements",
+    "genetic_findings",
+    "diagnoses",
+    "narrative_anchors"
+  ],
   "$defs": {
     "evidence": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["quote", "anchor"],
+      "required": [
+        "quote",
+        "anchor"
+      ],
       "properties": {
-        "quote": {"type": "string", "description": "Verbatim span from the source (<= 300 characters)."},
-        "anchor": {"type": "string", "description": "Location: 'abstract', 'sec:<n> ¶<m>', 'tab:<n> r<i>c<j>', 'fig:<label>', 'suppl'."}
+        "quote": {
+          "type": "string",
+          "description": "Verbatim span from the source (<= 300 characters)."
+        },
+        "anchor": {
+          "type": "string",
+          "description": "Location: 'abstract', 'sec:<n> ¶<m>', 'tab:<n> r<i>c<j>', 'fig:<label>', 'suppl'."
+        },
+        "verification": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "additionalProperties": false,
+          "description": "Filled at ingest: whether the quote occurs verbatim in the anchored unit / anywhere in the document, and its character offset within the anchored unit.",
+          "properties": {
+            "anchor_exists": {
+              "type": "boolean"
+            },
+            "in_anchor": {
+              "type": "boolean"
+            },
+            "in_document": {
+              "type": "boolean"
+            },
+            "offset": {
+              "type": [
+                "array",
+                "null"
+              ],
+              "items": {
+                "type": "integer"
+              },
+              "minItems": 2,
+              "maxItems": 2
+            }
+          }
+        }
       }
     },
     "age": {
-      "type": ["object", "null"],
+      "type": [
+        "object",
+        "null"
+      ],
       "additionalProperties": false,
       "properties": {
-        "iso8601": {"type": ["string", "null"], "description": "ISO 8601 duration, e.g. P3Y2M, P10D, P0D for birth. Null when not stated."},
-        "text": {"type": ["string", "null"], "description": "Age as written, e.g. '3 years', 'neonatal period', 'second decade'."},
-        "evidence": {"$ref": "#/$defs/evidence"}
+        "iso8601": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "ISO 8601 duration, e.g. P3Y2M, P10D, P0D for birth. Null when not stated."
+        },
+        "text": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Age as written, e.g. '3 years', 'neonatal period', 'second decade'."
+        },
+        "evidence": {
+          "$ref": "#/$defs/evidence"
+        }
       }
     },
     "grounding": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "status": {"type": "string", "enum": ["grounded", "candidate", "unresolved", "not_attempted"]},
-        "confidence": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
-        "method": {"type": ["string", "null"]},
-        "candidates": {"type": "array", "items": {"type": "object", "properties": {"id": {"type": "string"}, "label": {"type": "string"}, "score": {"type": "number"}}}}
+        "status": {
+          "type": "string",
+          "enum": [
+            "grounded",
+            "candidate",
+            "unresolved",
+            "not_attempted"
+          ]
+        },
+        "confidence": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "method": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "candidates": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              },
+              "score": {
+                "type": "number"
+              }
+            }
+          }
+        }
       }
     },
     "phenotype": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["text", "excluded", "evidence"],
+      "required": [
+        "text",
+        "excluded",
+        "evidence"
+      ],
       "properties": {
-        "text": {"type": "string", "description": "Finding as described, normalised to a short clinical phrase (e.g. 'axial hypotonia', 'metabolic acidosis')."},
-        "hpo_id": {"type": ["string", "null"], "pattern": "^HP:[0-9]{7}$"},
-        "hpo_label": {"type": ["string", "null"]},
-        "excluded": {"type": "boolean", "description": "True when the paper explicitly states the finding was absent/normal."},
-        "onset": {"$ref": "#/$defs/age"},
-        "severity": {"type": ["string", "null"]},
-        "modifier": {"type": ["string", "null"], "description": "e.g. 'progressive', 'episodic', 'bilateral', 'transient'."},
-        "evidence": {"$ref": "#/$defs/evidence"},
-        "grounding": {"$ref": "#/$defs/grounding"}
+        "text": {
+          "type": "string",
+          "description": "Finding as described, normalised to a short clinical phrase (e.g. 'axial hypotonia', 'metabolic acidosis')."
+        },
+        "hpo_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^HP:[0-9]{7}$"
+        },
+        "hpo_label": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "excluded": {
+          "type": "boolean",
+          "description": "True when the paper explicitly states the finding was absent/normal."
+        },
+        "onset": {
+          "$ref": "#/$defs/age"
+        },
+        "severity": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "modifier": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "e.g. 'progressive', 'episodic', 'bilateral', 'transient'."
+        },
+        "evidence": {
+          "$ref": "#/$defs/evidence"
+        },
+        "grounding": {
+          "$ref": "#/$defs/grounding"
+        }
       }
     },
     "measurement": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["analyte_text", "specimen", "interpretation", "evidence"],
+      "required": [
+        "analyte_text",
+        "specimen",
+        "interpretation",
+        "evidence"
+      ],
       "properties": {
-        "analyte_text": {"type": "string", "description": "Analyte as written, e.g. 'plasma ammonia', 'C3 acylcarnitine', 'urinary methylmalonic acid'."},
+        "analyte_text": {
+          "type": "string",
+          "description": "Analyte as written, e.g. 'plasma ammonia', 'C3 acylcarnitine', 'urinary methylmalonic acid'."
+        },
         "analyte": {
-          "type": ["object", "null"],
+          "type": [
+            "object",
+            "null"
+          ],
           "additionalProperties": false,
           "properties": {
-            "label": {"type": ["string", "null"]},
-            "chebi": {"type": ["string", "null"], "pattern": "^CHEBI:[0-9]+$"},
-            "vmh": {"type": ["string", "null"], "description": "Virtual Metabolic Human metabolite abbreviation, e.g. 'nh4', 'c3crn'."},
-            "loinc": {"type": ["string", "null"]},
-            "hmdb": {"type": ["string", "null"]}
+            "label": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "chebi": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "pattern": "^CHEBI:[0-9]+$"
+            },
+            "vmh": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Virtual Metabolic Human metabolite abbreviation, e.g. 'nh4', 'c3crn'."
+            },
+            "loinc": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "hmdb": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
           }
         },
-        "specimen": {"type": "string", "enum": ["plasma", "serum", "blood", "dried_blood_spot", "urine", "csf", "fibroblasts", "leukocytes", "liver", "muscle", "amniotic_fluid", "other", "unknown"]},
-        "value": {"type": ["number", "null"]},
-        "value_text": {"type": ["string", "null"], "description": "Value as written including comparator, e.g. '>1000', '0.5–0.8', 'markedly elevated'."},
-        "comparator": {"type": ["string", "null"], "enum": ["<", "<=", ">", ">=", "~", null]},
-        "unit": {"type": ["string", "null"], "description": "Unit as written."},
-        "unit_ucum": {"type": ["string", "null"], "description": "UCUM form filled by the grounder."},
-        "reference_range": {
-          "type": ["object", "null"],
-          "additionalProperties": false,
-          "properties": {"low": {"type": ["number", "null"]}, "high": {"type": ["number", "null"]}, "text": {"type": ["string", "null"]}}
+        "specimen": {
+          "type": "string",
+          "enum": [
+            "plasma",
+            "serum",
+            "blood",
+            "dried_blood_spot",
+            "urine",
+            "csf",
+            "fibroblasts",
+            "leukocytes",
+            "liver",
+            "muscle",
+            "amniotic_fluid",
+            "other",
+            "unknown"
+          ]
         },
-        "interpretation": {"type": "string", "enum": ["HIGH", "LOW", "NORMAL", "ABNORMAL", "UNKNOWN"], "description": "As reported by the authors, or by comparison with the stated reference range."},
-        "timing": {"type": ["string", "null"], "description": "e.g. 'at presentation', 'during crisis', 'on treatment', 'newborn screening', 'follow-up'."},
-        "condition": {"type": ["string", "null"], "description": "e.g. 'fasting', 'post-load', 'after protein restriction'."},
-        "age": {"$ref": "#/$defs/age"},
-        "panel": {"type": ["string", "null"], "description": "e.g. 'acylcarnitine profile', 'plasma amino acids', 'urine organic acids'."},
-        "method": {"type": ["string", "null"], "description": "e.g. 'MS/MS', 'GC-MS', 'HPLC'."},
-        "evidence": {"$ref": "#/$defs/evidence"},
-        "grounding": {"$ref": "#/$defs/grounding"}
+        "value": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "value_text": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Value as written including comparator, e.g. '>1000', '0.5–0.8', 'markedly elevated'."
+        },
+        "comparator": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "<",
+            "<=",
+            ">",
+            ">=",
+            "~",
+            null
+          ]
+        },
+        "unit": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Unit as written."
+        },
+        "unit_ucum": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "UCUM form filled by the grounder."
+        },
+        "reference_range": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "low": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "high": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "text": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "interpretation": {
+          "type": "string",
+          "enum": [
+            "HIGH",
+            "LOW",
+            "NORMAL",
+            "ABNORMAL",
+            "UNKNOWN"
+          ],
+          "description": "As reported by the authors, or by comparison with the stated reference range."
+        },
+        "timing": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "e.g. 'at presentation', 'during crisis', 'on treatment', 'newborn screening', 'follow-up'."
+        },
+        "condition": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "e.g. 'fasting', 'post-load', 'after protein restriction'."
+        },
+        "age": {
+          "$ref": "#/$defs/age"
+        },
+        "panel": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "e.g. 'acylcarnitine profile', 'plasma amino acids', 'urine organic acids'."
+        },
+        "method": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "e.g. 'MS/MS', 'GC-MS', 'HPLC'."
+        },
+        "evidence": {
+          "$ref": "#/$defs/evidence"
+        },
+        "grounding": {
+          "$ref": "#/$defs/grounding"
+        }
       }
     },
     "enzyme_activity": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["enzyme_text", "interpretation", "evidence"],
+      "required": [
+        "enzyme_text",
+        "interpretation",
+        "evidence"
+      ],
       "properties": {
-        "enzyme_text": {"type": "string"},
-        "gene_symbol": {"type": ["string", "null"]},
-        "ec_number": {"type": ["string", "null"]},
-        "tissue": {"type": ["string", "null"]},
-        "value": {"type": ["number", "null"]},
-        "unit": {"type": ["string", "null"]},
-        "percent_of_control": {"type": ["number", "null"]},
-        "reference_text": {"type": ["string", "null"]},
-        "interpretation": {"type": "string", "enum": ["DEFICIENT", "REDUCED", "NORMAL", "INCREASED", "UNKNOWN"]},
-        "evidence": {"$ref": "#/$defs/evidence"}
+        "enzyme_text": {
+          "type": "string"
+        },
+        "gene_symbol": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "ec_number": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "tissue": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "value": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "unit": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "percent_of_control": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "reference_text": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "interpretation": {
+          "type": "string",
+          "enum": [
+            "DEFICIENT",
+            "REDUCED",
+            "NORMAL",
+            "INCREASED",
+            "UNKNOWN"
+          ]
+        },
+        "evidence": {
+          "$ref": "#/$defs/evidence"
+        }
       }
     },
     "genetic_finding": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["gene_symbol", "evidence"],
+      "required": [
+        "gene_symbol",
+        "evidence"
+      ],
       "properties": {
-        "gene_symbol": {"type": "string"},
-        "hgnc_id": {"type": ["string", "null"]},
-        "variant_hgvs_c": {"type": ["string", "null"], "description": "e.g. 'c.1234G>A' (without transcript prefix)."},
-        "variant_hgvs_p": {"type": ["string", "null"], "description": "e.g. 'p.Arg412His' or 'p.(Arg412His)'."},
-        "variant_hgvs_g": {"type": ["string", "null"]},
-        "transcript": {"type": ["string", "null"], "description": "e.g. 'NM_000255.4'."},
-        "variant_text": {"type": ["string", "null"], "description": "Variant as written when not HGVS (e.g. 'exon 3 deletion', 'IVS2-1G>A', 'common 985A>G')."},
-        "zygosity": {"type": "string", "enum": ["HOMOZYGOUS", "HETEROZYGOUS", "COMPOUND_HETEROZYGOUS", "HEMIZYGOUS", "MOSAIC", "HOMOPLASMIC", "HETEROPLASMIC", "UNKNOWN"]},
-        "inheritance_as_stated": {"type": ["string", "null"], "enum": ["de_novo", "maternal", "paternal", "biparental", "unknown", null]},
-        "classification_as_reported": {"type": ["string", "null"], "enum": ["pathogenic", "likely_pathogenic", "uncertain_significance", "likely_benign", "benign", "not_stated", null]},
-        "method": {"type": ["string", "null"], "description": "e.g. 'WES', 'WGS', 'gene panel', 'Sanger', 'MLPA', 'array CGH', 'mtDNA sequencing'."},
-        "novel": {"type": ["boolean", "null"]},
-        "evidence": {"$ref": "#/$defs/evidence"},
-        "grounding": {"$ref": "#/$defs/grounding"}
+        "gene_symbol": {
+          "type": "string"
+        },
+        "hgnc_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "variant_hgvs_c": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "e.g. 'c.1234G>A' (without transcript prefix)."
+        },
+        "variant_hgvs_p": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "e.g. 'p.Arg412His' or 'p.(Arg412His)'."
+        },
+        "variant_hgvs_g": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "transcript": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "e.g. 'NM_000255.4'."
+        },
+        "variant_text": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Variant as written when not HGVS (e.g. 'exon 3 deletion', 'IVS2-1G>A', 'common 985A>G')."
+        },
+        "zygosity": {
+          "type": "string",
+          "enum": [
+            "HOMOZYGOUS",
+            "HETEROZYGOUS",
+            "COMPOUND_HETEROZYGOUS",
+            "HEMIZYGOUS",
+            "MOSAIC",
+            "HOMOPLASMIC",
+            "HETEROPLASMIC",
+            "UNKNOWN"
+          ]
+        },
+        "inheritance_as_stated": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "de_novo",
+            "maternal",
+            "paternal",
+            "biparental",
+            "unknown",
+            null
+          ]
+        },
+        "classification_as_reported": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "pathogenic",
+            "likely_pathogenic",
+            "uncertain_significance",
+            "likely_benign",
+            "benign",
+            "not_stated",
+            null
+          ]
+        },
+        "method": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "e.g. 'WES', 'WGS', 'gene panel', 'Sanger', 'MLPA', 'array CGH', 'mtDNA sequencing'."
+        },
+        "novel": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "evidence": {
+          "$ref": "#/$defs/evidence"
+        },
+        "grounding": {
+          "$ref": "#/$defs/grounding"
+        }
       }
     },
     "diagnosis": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["disease_text", "status", "confidence_tier", "evidence"],
+      "required": [
+        "disease_text",
+        "status",
+        "confidence_tier",
+        "evidence"
+      ],
       "properties": {
-        "disease_text": {"type": "string", "description": "Disease as named by the authors."},
+        "disease_text": {
+          "type": "string",
+          "description": "Disease as named by the authors."
+        },
         "disease": {
-          "type": ["object", "null"],
+          "type": [
+            "object",
+            "null"
+          ],
           "additionalProperties": false,
           "properties": {
-            "label": {"type": ["string", "null"]},
-            "mondo": {"type": ["string", "null"], "pattern": "^MONDO:[0-9]{7}$"},
-            "omim": {"type": ["string", "null"], "pattern": "^OMIM:[0-9]{6}$"},
-            "orphanet": {"type": ["string", "null"], "pattern": "^ORPHA:[0-9]+$"}
+            "label": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "mondo": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "pattern": "^MONDO:[0-9]{7}$"
+            },
+            "omim": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "pattern": "^OMIM:[0-9]{6}$"
+            },
+            "orphanet": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "pattern": "^ORPHA:[0-9]+$"
+            }
           }
         },
-        "status": {"type": "string", "enum": ["FINAL", "PROVISIONAL", "DIFFERENTIAL", "REVISED_FROM", "EXCLUDED"], "description": "FINAL = the diagnosis the authors conclude; REVISED_FROM = an earlier diagnosis later replaced; EXCLUDED = considered and ruled out."},
-        "confidence_tier": {"type": "string", "enum": ["MOLECULAR", "ENZYMATIC", "BIOCHEMICAL", "CLINICAL", "PROVISIONAL", "UNKNOWN"], "description": "Strongest evidence supporting the diagnosis in this paper."},
-        "diagnostic_route": {"type": ["string", "null"], "enum": ["newborn_screening", "symptomatic", "family_screening", "prenatal", "postmortem", "incidental", "unknown", null]},
-        "age_at_diagnosis": {"$ref": "#/$defs/age"},
-        "time_to_diagnosis_text": {"type": ["string", "null"], "description": "Delay between first symptoms and diagnosis as stated."},
-        "prior_misdiagnoses": {"type": "array", "items": {"type": "string"}},
-        "evidence": {"$ref": "#/$defs/evidence"},
-        "grounding": {"$ref": "#/$defs/grounding"}
+        "status": {
+          "type": "string",
+          "enum": [
+            "FINAL",
+            "PROVISIONAL",
+            "DIFFERENTIAL",
+            "REVISED_FROM",
+            "EXCLUDED"
+          ],
+          "description": "FINAL = the diagnosis the authors conclude; REVISED_FROM = an earlier diagnosis later replaced; EXCLUDED = considered and ruled out."
+        },
+        "confidence_tier": {
+          "type": "string",
+          "enum": [
+            "MOLECULAR",
+            "ENZYMATIC",
+            "BIOCHEMICAL",
+            "CLINICAL",
+            "PROVISIONAL",
+            "UNKNOWN"
+          ],
+          "description": "Strongest evidence supporting the diagnosis in this paper."
+        },
+        "diagnostic_route": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "newborn_screening",
+            "symptomatic",
+            "family_screening",
+            "prenatal",
+            "postmortem",
+            "incidental",
+            "unknown",
+            null
+          ]
+        },
+        "age_at_diagnosis": {
+          "$ref": "#/$defs/age"
+        },
+        "time_to_diagnosis_text": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Delay between first symptoms and diagnosis as stated."
+        },
+        "prior_misdiagnoses": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "evidence": {
+          "$ref": "#/$defs/evidence"
+        },
+        "grounding": {
+          "$ref": "#/$defs/grounding"
+        }
       }
     },
     "treatment": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["text", "type", "evidence"],
+      "required": [
+        "text",
+        "type",
+        "evidence"
+      ],
       "properties": {
-        "text": {"type": "string"},
-        "type": {"type": "string", "enum": ["diet", "cofactor_vitamin", "drug", "enzyme_replacement", "substrate_reduction", "transplant", "dialysis_or_extracorporeal", "gene_therapy", "supportive", "other"]},
-        "agent": {"type": ["string", "null"], "description": "Specific agent/diet, e.g. 'hydroxocobalamin', 'protein-restricted diet', 'sodium benzoate'."},
-        "response_text": {"type": ["string", "null"]},
-        "response": {"type": ["string", "null"], "enum": ["improved", "stable", "worsened", "no_response", "not_stated", null]},
-        "evidence": {"$ref": "#/$defs/evidence"}
+        "text": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "diet",
+            "cofactor_vitamin",
+            "drug",
+            "enzyme_replacement",
+            "substrate_reduction",
+            "transplant",
+            "dialysis_or_extracorporeal",
+            "gene_therapy",
+            "supportive",
+            "other"
+          ]
+        },
+        "agent": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Specific agent/diet, e.g. 'hydroxocobalamin', 'protein-restricted diet', 'sodium benzoate'."
+        },
+        "response_text": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "response": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "improved",
+            "stable",
+            "worsened",
+            "no_response",
+            "not_stated",
+            null
+          ]
+        },
+        "evidence": {
+          "$ref": "#/$defs/evidence"
+        }
       }
     }
   },
   "properties": {
-    "local_id": {"type": "string", "description": "Identifier used in the paper: 'Patient 1', 'the proband', 'II-2', 'Case A'."},
+    "local_id": {
+      "type": "string",
+      "description": "Identifier used in the paper: 'Patient 1', 'the proband', 'II-2', 'Case A'."
+    },
     "family": {
-      "type": ["object", "null"],
+      "type": [
+        "object",
+        "null"
+      ],
       "additionalProperties": false,
       "properties": {
-        "family_id": {"type": ["string", "null"]},
-        "consanguinity": {"type": ["boolean", "null"]},
-        "family_history_text": {"type": ["string", "null"]},
-        "relatives_in_paper": {"type": "array", "items": {"type": "object", "additionalProperties": false, "properties": {"local_id": {"type": "string"}, "relation": {"type": "string"}}}}
+        "family_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "consanguinity": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "family_history_text": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "relatives_in_paper": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "local_id": {
+                "type": "string"
+              },
+              "relation": {
+                "type": "string"
+              }
+            }
+          }
+        }
       }
     },
     "subject": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["sex"],
+      "required": [
+        "sex"
+      ],
       "properties": {
-        "sex": {"type": "string", "enum": ["MALE", "FEMALE", "OTHER_SEX", "UNKNOWN_SEX"]},
-        "ancestry_as_stated": {"type": ["string", "null"]},
-        "country_of_care": {"type": ["string", "null"]},
-        "age_at_onset": {"$ref": "#/$defs/age"},
-        "age_at_presentation": {"$ref": "#/$defs/age"},
-        "age_at_last_followup": {"$ref": "#/$defs/age"},
-        "vital_status": {"type": "string", "enum": ["ALIVE", "DECEASED", "UNKNOWN"]},
-        "age_at_death": {"$ref": "#/$defs/age"},
-        "gestational_age_weeks": {"type": ["number", "null"]},
-        "birth_weight_g": {"type": ["number", "null"]}
+        "sex": {
+          "type": "string",
+          "enum": [
+            "MALE",
+            "FEMALE",
+            "OTHER_SEX",
+            "UNKNOWN_SEX"
+          ]
+        },
+        "ancestry_as_stated": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "country_of_care": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "age_at_onset": {
+          "$ref": "#/$defs/age"
+        },
+        "age_at_presentation": {
+          "$ref": "#/$defs/age"
+        },
+        "age_at_last_followup": {
+          "$ref": "#/$defs/age"
+        },
+        "vital_status": {
+          "type": "string",
+          "enum": [
+            "ALIVE",
+            "DECEASED",
+            "UNKNOWN"
+          ]
+        },
+        "age_at_death": {
+          "$ref": "#/$defs/age"
+        },
+        "gestational_age_weeks": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "birth_weight_g": {
+          "type": [
+            "number",
+            "null"
+          ]
+        }
       }
     },
-    "phenotypes": {"type": "array", "items": {"$ref": "#/$defs/phenotype"}},
-    "measurements": {"type": "array", "items": {"$ref": "#/$defs/measurement"}},
-    "enzyme_activities": {"type": "array", "items": {"$ref": "#/$defs/enzyme_activity"}},
-    "genetic_findings": {"type": "array", "items": {"$ref": "#/$defs/genetic_finding"}},
-    "diagnoses": {"type": "array", "items": {"$ref": "#/$defs/diagnosis"}},
-    "treatments": {"type": "array", "items": {"$ref": "#/$defs/treatment"}},
-    "outcome": {
-      "type": ["object", "null"],
-      "additionalProperties": false,
-      "properties": {"text": {"type": ["string", "null"]}, "evidence": {"$ref": "#/$defs/evidence"}}
+    "phenotypes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/phenotype"
+      }
     },
-    "clinical_summary": {"type": "string", "description": "3-6 sentence neutral summary of presentation, work-up, diagnosis and course, written from the extracted facts only."},
-    "extractor_notes": {"type": "array", "items": {"type": "string"}, "description": "Ambiguities, conflicts between text and tables, missing units, anything a curator should look at."}
+    "measurements": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/measurement"
+      }
+    },
+    "enzyme_activities": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/enzyme_activity"
+      }
+    },
+    "genetic_findings": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/genetic_finding"
+      }
+    },
+    "diagnoses": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/diagnosis"
+      }
+    },
+    "treatments": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/treatment"
+      }
+    },
+    "outcome": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "text": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "evidence": {
+          "$ref": "#/$defs/evidence"
+        }
+      }
+    },
+    "clinical_summary": {
+      "type": "string",
+      "description": "3-6 sentence neutral summary of presentation, work-up, diagnosis and course, written from the extracted facts only."
+    },
+    "extractor_notes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Ambiguities, conflicts between text and tables, missing units, anything a curator should look at."
+    },
+    "narrative_anchors": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "EVERY unit of the source that describes this individual, in document order: 'abstract', paragraph anchors 'sec:N ¶M', table rows 'tab:N rI' or columns 'tab:N cJ'. This is the full patient description; be complete — include presentation, history, examination, investigations, genetics, treatment, follow-up, and the relevant table rows/columns. Coarse anchors ('sec:N', 'tab:N') are allowed when a whole section/table is about this individual."
+    },
+    "case_narrative": {
+      "type": "array",
+      "description": "Filled at ingest from narrative_anchors: the verbatim passages, one per anchor unit, in document order.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "anchor",
+          "text"
+        ],
+        "properties": {
+          "anchor": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          },
+          "chars": {
+            "type": "integer"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "extractor",
+              "manifest",
+              "curator"
+            ]
+          }
+        }
+      }
+    },
+    "narrative_source": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "extractor",
+        "manifest",
+        "curator",
+        null
+      ],
+      "description": "Where narrative_anchors came from: the extractor's own list (preferred), the triage manifest's coarse 'where' anchors (backfill), or a curator."
+    }
   }
 }
