@@ -1,6 +1,7 @@
 """Full-text retrieval in tiers. Each attempt is recorded; the best tier reached is stored on the document.
 
 Tier 1  epmc        Europe PMC full-text XML (JATS) + supplementary files, for anything inEPMC.
+Tier 1b pmc         NCBI PMC efetch (db=pmc) JATS XML — open-access articles reach PMC weeks before Europe PMC.
 Tier 2  unpaywall   legal OA copy located by DOI (PDF or landing page), when not in Europe PMC.
 Tier 3  publisher   Elsevier / Wiley / Springer Nature TDM APIs under institutional tokens (optional).
 Tier 4  abstract    nothing beyond PubMed metadata; the record is still extracted from the abstract.
@@ -22,6 +23,7 @@ from .db import Catalogue
 from .harvest import EPMC, RateLimiter
 
 UNPAYWALL = "https://api.unpaywall.org/v2"
+PMC_EFETCH = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi"
 ELSEVIER = "https://api.elsevier.com/content/article/doi"
 WILEY = "https://api.wiley.com/onlinelibrary/tdm/v1/articles"
 SPRINGER_OA = "https://api.springernature.com/openaccess/jats"
@@ -55,6 +57,25 @@ class FullTextFetcher:
             if rs.status_code == 200 and rs.content[:2] == b"PK":
                 (d / "supplementary.zip").write_bytes(rs.content)
         return True, str(p), "ok"
+
+    # ---- tier 1b: NCBI PMC efetch -------------------------------------------
+    def pmc(self, pmid: str, pmcid: str | None) -> tuple[bool, str | None, str]:
+        if not pmcid:
+            return False, None, "no PMCID"
+        self.rl.wait()
+        params = {"db": "pmc", "id": pmcid, "retmode": "xml", "tool": "casecorpus"}
+        if self.s.email:
+            params["email"] = self.s.email
+        if self.s.ncbi_api_key:
+            params["api_key"] = self.s.ncbi_api_key
+        r = self.session.get(PMC_EFETCH, params=params, timeout=180)
+        if r.status_code != 200 or b"<body" not in r.content:
+            return False, None, f"pmc efetch HTTP {r.status_code}" + ("" if r.status_code != 200 else " (no body: not open access)")
+        d = self.s.raw_dir / pmid
+        d.mkdir(parents=True, exist_ok=True)
+        p = d / "epmc.xml"  # same JATS layout; downstream treats it identically
+        p.write_bytes(r.content)
+        return True, str(p), "ok (pmc efetch)"
 
     # ---- tier 2: Unpaywall ---------------------------------------------------
     def unpaywall(self, pmid: str, doi: str | None) -> tuple[bool, str | None, str]:
@@ -136,7 +157,7 @@ class FullTextFetcher:
         return False, None, f"no TDM credentials for prefix {prefix}"
 
 
-def fetch_all(settings: Settings, cat: Catalogue, tiers: tuple[str, ...] = ("epmc", "unpaywall", "publisher"),
+def fetch_all(settings: Settings, cat: Catalogue, tiers: tuple[str, ...] = ("epmc", "pmc", "unpaywall", "publisher"),
               limit: int | None = None, retry_failed: bool = False) -> dict[str, Any]:
     settings.ensure()
     f = FullTextFetcher(settings, cat)
@@ -153,6 +174,8 @@ def fetch_all(settings: Settings, cat: Catalogue, tiers: tuple[str, ...] = ("epm
                 continue
             if tier == "epmc":
                 ok, path, status = f.epmc(pmid, d.get("pmcid"))
+            elif tier == "pmc":
+                ok, path, status = f.pmc(pmid, d.get("pmcid"))
             elif tier == "unpaywall":
                 ok, path, status = f.unpaywall(pmid, d.get("doi"))
             elif tier == "publisher":

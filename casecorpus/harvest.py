@@ -59,9 +59,10 @@ class PubMed:
         return p
 
     def _get(self, url: str, retries: int = 5, **params: Any) -> requests.Response:
+        """POST (E-utilities accept it for every endpoint) so long term lists never hit URL-length limits."""
         for attempt in range(retries):
             self.rl.wait()
-            r = self.session.get(url, params=self._params(**params), timeout=120)
+            r = self.session.post(url, data=self._params(**params), timeout=180)
             if r.status_code == 200:
                 return r
             if r.status_code in (429, 500, 502, 503, 504):
@@ -184,11 +185,11 @@ def _chunks(seq: list[str], n: int) -> Iterator[list[str]]:
 
 
 def harvest_lag(settings: Settings, cat: Catalogue, seed_query: str = DEFAULT_SEED_QUERY, years_back: int = 3,
-                max_terms_per_query: int = 150, limit: int | None = None) -> dict[str, Any]:
+                max_terms_per_query: int = 100, limit: int | None = None) -> dict[str, Any]:
     """Layer A': recent Case Reports mentioning scope disease names or genes in title/abstract but not
     caught by the MeSH seed (indexing lag or missing MeSH)."""
     scope_dir = settings.scope_dir
-    terms = [t for t in (scope_dir / "terms.txt").read_text().splitlines() if len(t) >= 8]
+    terms = [t for t in (scope_dir / "terms.txt").read_text().splitlines() if len(t) >= 8 and not re.search(r"[()\[\]\":*?]", t)]
     genes = [g for g in (scope_dir / "genes.txt").read_text().splitlines() if len(g) >= 3]
     pm = PubMed(settings)
     year = time.gmtime().tm_year

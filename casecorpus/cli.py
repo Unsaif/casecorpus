@@ -136,7 +136,7 @@ def enrich(home: Optional[str] = None, all: bool = False, limit: Optional[int] =
 
 
 @app.command()
-def fulltext(home: Optional[str] = None, tiers: str = "epmc,unpaywall,publisher", limit: Optional[int] = None, retry_failed: bool = False):
+def fulltext(home: Optional[str] = None, tiers: str = "epmc,pmc,unpaywall,publisher", limit: Optional[int] = None, retry_failed: bool = False):
     """Fetch full text in tiers for documents that have none yet."""
     from .fulltext import fetch_all
     s, cat = _ctx(home)
