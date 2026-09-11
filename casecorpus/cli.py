@@ -40,7 +40,8 @@ ONTOLOGY_URLS = {
     "genes_to_disease.txt": "https://github.com/obophenotype/human-phenotype-ontology/releases/latest/download/genes_to_disease.txt",
     "mondo.json": "https://github.com/monarch-initiative/mondo/releases/latest/download/mondo.json",
     "hgnc_complete_set.txt": "https://storage.googleapis.com/public-download-files/hgnc/tsv/tsv/hgnc_complete_set.txt",
-    "chebi_names.tsv.gz": "https://ftp.ebi.ac.uk/pub/databases/chebi/Flat_file_tab_delimited/names.tsv.gz",
+    "chebi_names.tsv.gz": "https://ftp.ebi.ac.uk/pub/databases/chebi/flat_files/names.tsv.gz",
+    "chebi_compounds.tsv.gz": "https://ftp.ebi.ac.uk/pub/databases/chebi/flat_files/compounds.tsv.gz",
 }
 
 
@@ -80,7 +81,7 @@ def fetch_ontologies(home: Optional[str] = None, only: Optional[str] = None, for
                         fh.write(chunk)
             typer.echo(f"{name}: {dest.stat().st_size/1e6:.1f} MB")
         except Exception as e:
-            typer.echo(f"{name}: FAILED ({e}) — optional for {name}" if name in ("hgnc_complete_set.txt", "chebi_names.tsv.gz") else f"{name}: FAILED ({e})")
+            typer.echo(f"{name}: FAILED ({e}) — optional, grounding works without it" if name in ("hgnc_complete_set.txt", "chebi_names.tsv.gz", "chebi_compounds.tsv.gz") else f"{name}: FAILED ({e})")
 
 
 @app.command()

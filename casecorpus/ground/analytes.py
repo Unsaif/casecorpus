@@ -1,5 +1,6 @@
 """Analyte grounding: built-in IEM lexicon (data/analytes_builtin.tsv) + optional ChEBI names
-(ontologies/chebi_names.tsv.gz from https://ftp.ebi.ac.uk/pub/databases/chebi/Flat_file_tab_delimited/names.tsv.gz)
+(ontologies/chebi_names.tsv.gz and chebi_compounds.tsv.gz from https://ftp.ebi.ac.uk/pub/databases/chebi/flat_files/;
+the pre-2025 Flat_file_tab_delimited/names.tsv.gz layout is also understood)
 + optional VMH metabolite table (ontologies/vmh_metabolites.tsv with columns abbreviation, fullName, chebiId[, hmdb]).
 
 Specimen words and panel words are stripped before matching ("plasma ammonia" -> "ammonia")."""
@@ -12,6 +13,13 @@ from pathlib import Path
 from typing import Any
 
 from rapidfuzz import fuzz, process
+
+_HTML = re.compile(r"<[^>]+>")
+
+
+def _strip_html(s: str) -> str:
+    return _HTML.sub("", s)
+
 
 _SPECIMEN_WORDS = r"\b(plasma|serum|blood|urinary|urine|csf|cerebrospinal fluid|dried blood spot|dbs|whole blood|fibroblast|leukocyte|level|levels|concentration|concentrations|of)\b"
 
@@ -62,19 +70,46 @@ class AnalyteGrounder:
                     e["vmh"] = e["vmh"] or row.get("abbreviation")
                     e["chebi"] = e["chebi"] or chebi
                     self.exact.setdefault(_norm(label), label)
-        chebi_names = ontologies / "chebi_names.tsv.gz"
-        if chebi_names.exists():
-            with gzip.open(chebi_names, "rt") as fh:
-                for row in csv.DictReader(fh, delimiter="\t"):
-                    name = row.get("NAME")
-                    cid = row.get("COMPOUND_ID")
-                    if not name or not cid or len(name) < 3:
-                        continue
-                    key = _norm(name)
-                    if key not in self.exact:
-                        self.entries.setdefault(name, {"chebi": f"CHEBI:{cid}", "vmh": None, "kind": "metabolite", "source": "chebi"})
-                        self.exact[key] = name
+        self._load_chebi(ontologies)
         self._choices = list(self.exact.keys())
+
+    def _add_chebi(self, name: str | None, cid: str | None) -> None:
+        if not name or not cid:
+            return
+        name = _strip_html(name)
+        if len(name) < 3:
+            return
+        key = _norm(name)
+        if key and key not in self.exact:
+            self.entries.setdefault(name, {"chebi": f"CHEBI:{cid}", "vmh": None, "kind": "metabolite", "source": "chebi"})
+            self.exact[key] = name
+
+    def _load_chebi(self, ontologies: Path) -> None:
+        """ChEBI names: primary names from compounds.tsv.gz first (so they win), then synonyms/IUPAC from names.tsv.gz.
+        Handles the 2025+ flat_files layout (lowercase columns, status_id, ascii_name) and the older tab-delimited one."""
+        comp = ontologies / "chebi_compounds.tsv.gz"
+        if comp.exists():
+            with gzip.open(comp, "rt", newline="") as fh:
+                for row in csv.DictReader(fh, delimiter="\t", quoting=csv.QUOTE_NONE):
+                    status = row.get("status_id") or row.get("STATUS")
+                    if status not in (None, "", "1", "3", "C", "E"):  # 1 CHECKED, 3 OK (new); C/E (old)
+                        continue
+                    cid = row.get("id") or row.get("ID")
+                    self._add_chebi(row.get("name") or row.get("NAME"), cid)
+                    self._add_chebi(row.get("ascii_name"), cid)
+        names = ontologies / "chebi_names.tsv.gz"
+        if names.exists():
+            with gzip.open(names, "rt", newline="") as fh:
+                for row in csv.DictReader(fh, delimiter="\t", quoting=csv.QUOTE_NONE):
+                    status = row.get("status_id")
+                    if status not in (None, "", "1", "3"):
+                        continue
+                    lang = row.get("language_code") or row.get("LANGUAGE")
+                    if lang and lang not in ("en", "la"):
+                        continue
+                    cid = row.get("compound_id") or row.get("COMPOUND_ID")
+                    self._add_chebi(row.get("name") or row.get("NAME"), cid)
+                    self._add_chebi(row.get("ascii_name"), cid)
 
     def ground(self, text: str, supplied_chebi: str | None = None) -> dict[str, Any]:
         # try the whole string, then the string without parentheticals, then each parenthetical / trailing code alone
