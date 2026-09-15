@@ -15,6 +15,11 @@ from typing import Any
 from rapidfuzz import fuzz, process
 
 _HTML = re.compile(r"<[^>]+>")
+_STEREO = re.compile(r"^(?:\(?[RSEZ]\)?-|[LD]-|\(\+\)-|\(-\)-|\(\+/-\)-|\(±\)-|[+-]-|alpha-|beta-|α-|β-|cis-|trans-|all-trans-|n-|iso-)+", re.I)
+
+
+def _strip_stereo(s: str) -> str:
+    return _STEREO.sub("", s)
 
 
 def _strip_html(s: str) -> str:
@@ -49,6 +54,7 @@ class AnalyteGrounder:
     def __init__(self, ontologies: Path):
         self.entries: dict[str, dict[str, Any]] = {}   # label -> {chebi, vmh, kind}
         self.exact: dict[str, str] = {}                 # normalised name/synonym -> label
+        self.loose: dict[str, str] = {}                 # stereo-descriptor-stripped name -> label (lower confidence)
         builtin = Path(__file__).resolve().parent.parent / "data" / "analytes_builtin.tsv"
         with open(builtin, newline="") as fh:
             for row in csv.DictReader(fh, delimiter="\t"):
@@ -83,6 +89,10 @@ class AnalyteGrounder:
         if key and key not in self.exact:
             self.entries.setdefault(name, {"chebi": f"CHEBI:{cid}", "vmh": None, "kind": "metabolite", "source": "chebi"})
             self.exact[key] = name
+        # stereo-stripped fallback ("(S)-3-hydroxyisobutyric acid" also answers to "3-hydroxyisobutyric acid")
+        loose = _norm(_strip_stereo(name))
+        if loose and loose != key and loose not in self.exact:
+            self.loose.setdefault(loose, name)
 
     def _load_chebi(self, ontologies: Path) -> None:
         """ChEBI names: primary names from compounds.tsv.gz first (so they win), then synonyms/IUPAC from names.tsv.gz.
@@ -127,6 +137,13 @@ class AnalyteGrounder:
             e = self.entries[label]
             return {"ids": {"label": label, "chebi": e["chebi"] or supplied_chebi, "vmh": e["vmh"]},
                     "grounding": {"status": "grounded", "confidence": 0.95, "method": f"exact:{e['source']}", "candidates": []}}
+        loose_key = _norm(_strip_stereo(re.sub(r"\(.*?\)", " ", text)))
+        for k in (key, loose_key):
+            if k in self.loose:
+                label = self.loose[k]
+                e = self.entries[label]
+                return {"ids": {"label": label, "chebi": e["chebi"] or supplied_chebi, "vmh": e["vmh"]},
+                        "grounding": {"status": "grounded", "confidence": 0.85, "method": f"stereo-stripped:{e['source']}", "candidates": []}}
         cands = []
         if key:
             for choice, score, _ in process.extract(key, self._choices, scorer=fuzz.WRatio, limit=5, score_cutoff=80):

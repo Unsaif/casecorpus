@@ -1,9 +1,9 @@
 """Ingest extraction outputs from work/<pmid>/ : ground -> validate -> phenopacket -> catalogue + records/."""
 from __future__ import annotations
 
+import hashlib
 import json
 import re
-from pathlib import Path
 from typing import Any
 
 from .config import Settings
@@ -70,7 +70,8 @@ def ingest(settings: Settings, cat: Catalogue, grounders: Grounders | None = Non
         stats["manifests"] += 1
         cat.set_triage(pmid, in_scope=int(bool(manifest.get("in_scope"))), n_individuals=len([i for i in manifest.get("individuals", []) if i.get("is_affected", True)]),
                        individual_ids=[i["local_id"] for i in manifest.get("individuals", [])], is_rereport=int(any(i.get("is_rereport") for i in manifest.get("individuals", []))),
-                       reasons=manifest.get("reasons"), model=manifest.get("_model"), prompt_version=manifest.get("_prompt_version"))
+                       reasons=manifest.get("reasons"), model=manifest.get("_model"), prompt_version=manifest.get("_prompt_version"),
+                       document_type=manifest.get("document_type"))
         if not manifest.get("in_scope"):
             continue
         stats["in_scope"] += 1
@@ -78,6 +79,8 @@ def ingest(settings: Settings, cat: Catalogue, grounders: Grounders | None = Non
         md = (wd / "input.md").read_text() if (wd / "input.md").exists() else ""
         idx = index_markdown(md)
         manifest_where = {i.get("local_id"): i.get("where", []) for i in manifest.get("individuals", [])}
+        manifest_ind = {i.get("local_id"): i for i in manifest.get("individuals", [])}
+        input_sha = hashlib.sha256(md.encode("utf-8")).hexdigest() if md else None
         for rp in sorted(wd.glob("record_*.json")):
             rec = json.load(open(rp))
             # --- full patient description: verbatim passages assembled from the source by anchor ---
@@ -122,7 +125,11 @@ def ingest(settings: Settings, cat: Catalogue, grounders: Grounders | None = Non
             valid = not any(i["severity"] == "error" for i in issues)
             conf = confidence_from_issues(rec, issues)
             rec["_source"] = {"pmid": pmid, "pmcid": doc.get("pmcid"), "doi": doc.get("doi"), "title": doc.get("title"), "journal": doc.get("journal"),
-                              "year": doc.get("pub_year"), "license": doc.get("license"), "tier": doc.get("fulltext_tier")}
+                              "year": doc.get("pub_year"), "license": doc.get("license"), "tier": doc.get("fulltext_tier"),
+                              "input_sha256": input_sha, "sets": cat.sets_of(pmid)}
+            mi = manifest_ind.get(rec.get("local_id"), {})
+            rec["_triage"] = {"document_type": manifest.get("document_type"), "case_type": mi.get("case_type"),
+                              "case_type_reason": mi.get("case_type_reason"), "is_rereport": mi.get("is_rereport"), "family_id": mi.get("family_id")}
             rec["_validation"] = issues
             rec["_confidence"] = conf
             cat.put_individual(record_id, pmid, rec.get("local_id"), rec, pp if valid else None, valid, issues, conf,

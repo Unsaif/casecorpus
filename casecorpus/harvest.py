@@ -151,8 +151,9 @@ def _doc_text(d: dict[str, Any]) -> str:
 
 
 def harvest_seed(settings: Settings, cat: Catalogue, query: str = DEFAULT_SEED_QUERY, layer: str = "A_seed",
-                 mindate: str | None = None, limit: int | None = None) -> dict[str, Any]:
-    """Run a PubMed query through the history server and upsert every record."""
+                 mindate: str | None = None, limit: int | None = None, set_name: str | None = None) -> dict[str, Any]:
+    """Run a PubMed query through the history server and upsert every record.
+    With set_name, every record is also added to that named document set (documents can be in many sets)."""
     settings.ensure()
     pm = PubMed(settings)
     matcher = ScopeMatcher(load_scope(settings.scope_dir)) if (settings.scope_dir / "scope.json").exists() else None
@@ -160,7 +161,7 @@ def harvest_seed(settings: Settings, cat: Catalogue, query: str = DEFAULT_SEED_Q
     if limit:
         count = min(count, limit)
     n = 0
-    with tqdm(total=count, desc=f"harvest {layer}") as bar:
+    with tqdm(total=count, desc=f"harvest {set_name or layer}") as bar:
         for xml in pm.fetch_history(webenv, qk, count):
             for d in parse_pubmed_xml(xml):
                 d["corpus_layer"] = layer
@@ -170,6 +171,8 @@ def harvest_seed(settings: Settings, cat: Catalogue, query: str = DEFAULT_SEED_Q
                 if existing and existing.get("corpus_layer") and existing["corpus_layer"] < layer:
                     d["corpus_layer"] = existing["corpus_layer"]  # keep the most precise layer
                 cat.upsert_document(d)
+                if set_name:
+                    cat.add_to_set(d["pmid"], set_name, query)
                 n += 1
                 bar.update(1)
                 if limit and n >= limit:

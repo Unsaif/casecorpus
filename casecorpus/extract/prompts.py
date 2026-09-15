@@ -7,7 +7,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-PROMPT_VERSION = "0.2.0"
+PROMPT_VERSION = "0.3.0"
 SCHEMA_DIR = Path(__file__).resolve().parent.parent / "schema"
 RECORD_SCHEMA = json.load(open(SCHEMA_DIR / "record.schema.json"))
 MANIFEST_SCHEMA = json.load(open(SCHEMA_DIR / "manifest.schema.json"))
@@ -19,6 +19,8 @@ Disease scope for this run: {scope_description}
 In scope means: the document describes at least one individual human (not only pooled statistics) with a stated, suspected or later-revised diagnosis in the disease scope, and reports at least one of: phenotypic features, biochemical/laboratory findings, genetic findings. Reviews with no individual data, animal or cell studies, method papers and pooled cohort statistics without per-patient data are out of scope. A cohort paper with a per-patient table IS in scope.
 
 List every affected individual with the identifier the paper uses (e.g. "Patient 1", "the proband", "II-2", "Case A", or "the patient" when unnamed). Include unaffected relatives only if the paper gives their own clinical/biochemical/genetic data, and mark is_affected accordingly. If the paper says an individual was reported before, set is_rereport and cite the reference text.
+
+For each individual, set case_type to why the authors report them (typical presentation, atypical presentation, novel variant/genotype, treatment or response, diagnostic odyssey or misdiagnosis, complication or natural history, screening-detected) with a short supporting phrase in case_type_reason; this records reporting bias and must reflect the authors' framing, not your judgement. If the paper tabulates previously published cases (a review of reported cases), set document_type accordingly and list their citation strings in cited_case_references.
 
 Answer ONLY with a JSON object matching this schema (no prose):
 {manifest_schema}"""

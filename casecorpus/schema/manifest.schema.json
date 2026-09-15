@@ -1,34 +1,137 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://casecorpus/schema/manifest/v0.1",
+  "$id": "https://casecorpus/schema/manifest/v0.2",
   "title": "DocumentManifest",
   "description": "Triage decision for one publication: is it in scope, and which individuals does it describe?",
   "type": "object",
   "additionalProperties": false,
-  "required": ["in_scope", "document_type", "individuals", "reasons"],
+  "required": [
+    "in_scope",
+    "document_type",
+    "individuals",
+    "reasons"
+  ],
   "properties": {
-    "in_scope": {"type": "boolean", "description": "True if the document describes at least one individual human with a stated/suspected/revised diagnosis in the disease scope, with phenotypic, biochemical or genetic findings."},
-    "document_type": {"type": "string", "enum": ["case_report", "case_series", "cohort_with_individual_data", "review_with_case", "family_study", "other"]},
-    "reasons": {"type": "string", "description": "One or two sentences justifying the decision."},
-    "scope_diseases_mentioned": {"type": "array", "items": {"type": "string"}, "description": "Disease names in the disease scope that the document is about."},
-    "languages": {"type": "array", "items": {"type": "string"}},
+    "in_scope": {
+      "type": "boolean",
+      "description": "True if the document describes at least one individual human with a stated/suspected/revised diagnosis in the disease scope, with phenotypic, biochemical or genetic findings."
+    },
+    "document_type": {
+      "type": "string",
+      "enum": [
+        "case_report",
+        "case_series",
+        "cohort_with_individual_data",
+        "cohort_summary_only",
+        "review_with_case",
+        "review_of_published_cases",
+        "family_study",
+        "other"
+      ],
+      "description": "case_report: 1 individual; case_series: 2+ individuals described individually; cohort_with_individual_data: per-patient table/rows; cohort_summary_only: pooled statistics without per-patient data (out of scope for records, in scope for a later cohort summary); review_with_case: review that embeds a new case; review_of_published_cases: tabulates previously published cases (their citations matter); family_study: pedigree with several affected relatives."
+    },
+    "reasons": {
+      "type": "string",
+      "description": "One or two sentences justifying the decision."
+    },
+    "scope_diseases_mentioned": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Disease names in the disease scope that the document is about."
+    },
+    "languages": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
     "individuals": {
       "type": "array",
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["local_id", "where"],
+        "required": [
+          "local_id",
+          "where"
+        ],
         "properties": {
-          "local_id": {"type": "string", "description": "Identifier as used in the paper. Use 'the patient' when a single unnamed patient is described."},
-          "where": {"type": "array", "items": {"type": "string"}, "description": "Anchors where this individual's data live: 'abstract', 'sec:<n>', 'tab:<n> r<i>' (row-wise) or 'tab:<n> c<j>' (column-wise)."},
-          "family_id": {"type": ["string", "null"]},
-          "is_affected": {"type": "boolean", "description": "False for unaffected relatives mentioned only for context."},
-          "is_rereport": {"type": "boolean", "description": "True if the paper states this individual was described in an earlier publication."},
-          "rereport_reference": {"type": ["string", "null"], "description": "Citation text or PMID of the earlier report."}
+          "local_id": {
+            "type": "string",
+            "description": "Identifier as used in the paper. Use 'the patient' when a single unnamed patient is described."
+          },
+          "where": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Anchors where this individual's data live: 'abstract', 'sec:<n>', 'tab:<n> r<i>' (row-wise) or 'tab:<n> c<j>' (column-wise)."
+          },
+          "family_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "is_affected": {
+            "type": "boolean",
+            "description": "False for unaffected relatives mentioned only for context."
+          },
+          "case_type": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "typical_presentation",
+              "atypical_presentation",
+              "novel_variant_or_genotype",
+              "treatment_or_response",
+              "diagnostic_odyssey_or_misdiagnosis",
+              "complication_or_natural_history",
+              "screening_detected",
+              "other",
+              null
+            ],
+            "description": "Why this individual was reported, as the authors frame it: a typical presentation (teaching/illustrative case), an atypical or unusual presentation, a novel variant or genotype, a treatment or response report, a diagnostic odyssey or prior misdiagnosis, a complication or long-term natural history, or a screening-detected (asymptomatic) case. Records reporting bias for later analyses."
+          },
+          "case_type_reason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Short phrase from the paper supporting case_type (e.g. 'first report of', 'unusual presentation', 'detected by newborn screening')."
+          },
+          "is_rereport": {
+            "type": "boolean",
+            "description": "True if the paper states this individual was described in an earlier publication."
+          },
+          "rereport_reference": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Citation text or PMID of the earlier report."
+          }
         }
       }
     },
-    "has_individual_level_table": {"type": "boolean"},
-    "notes": {"type": "array", "items": {"type": "string"}}
+    "has_individual_level_table": {
+      "type": "boolean"
+    },
+    "notes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "cited_case_references": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "For reviews/series that tabulate previously published cases: the citation strings (or PMIDs) of those earlier reports, for harvest-completeness checks."
+    }
   }
 }

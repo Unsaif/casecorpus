@@ -16,6 +16,16 @@ Typical run (on a machine with internet access):
   casecorpus link                                            # cross-paper same-individual links
   casecorpus export                                          # parquet/csv tables
   casecorpus status
+
+Pilot / evaluation (docs/pilot2-protocol.md, docs/pilot2-runbook.md):
+
+  casecorpus count-diseases                                  # PubMed counts per pilot disease query
+  casecorpus harvest-diseases                                # one harvest per disease -> sets pilot2:<key>
+  casecorpus sample                                          # stratified 25/disease -> set pilot2-sample
+  casecorpus fulltext --only-set pilot2-sample
+  casecorpus prepare --only-set pilot2-sample
+  casecorpus review-export --only-set pilot2-sample --reviewers a,b   # workbooks for human verification
+  casecorpus review-import                                   # filled workbooks -> gold/ + metrics
 """
 from __future__ import annotations
 
@@ -129,6 +139,49 @@ def import_pmids(file: Path, home: Optional[str] = None, layer: str = "C_manual"
 
 
 @app.command()
+def count_diseases(home: Optional[str] = None, file: Optional[Path] = None):
+    """PubMed hit counts for each pilot disease query (sanity check before harvest-diseases)."""
+    from .pilot import count_disease_sets, load_disease_sets
+    s, _ = _ctx(home)
+    rows = count_disease_sets(s, load_disease_sets(file))
+    for r in rows:
+        typer.echo(f"{r['key']:8s} case reports {r['case_reports']:6d}  all pub types {r['all_pubtypes']:6d}  mesh-only {r.get('mesh_only', '-')}")
+    typer.echo(json.dumps(rows, indent=1))
+
+
+@app.command()
+def harvest_diseases(home: Optional[str] = None, file: Optional[Path] = None, prefix: str = "pilot2",
+                     limit_per_set: Optional[int] = None, mindate: Optional[str] = None):
+    """Per-disease PubMed harvest (MeSH OR names OR genes) x Case Reports; each disease becomes set <prefix>:<key>."""
+    from .pilot import harvest_disease_sets, load_disease_sets
+    s, cat = _ctx(home)
+    sets = load_disease_sets(file)
+    _run(cat, "harvest-diseases", {"file": str(file or "builtin"), "prefix": prefix, "limit_per_set": limit_per_set, "mindate": mindate},
+         lambda: harvest_disease_sets(s, cat, sets, prefix, limit_per_set, mindate))
+
+
+@app.command()
+def sample(home: Optional[str] = None, prefix: str = "pilot2", name: str = "pilot2-sample", per_set: int = 25, seed: int = 1,
+           fulltext_share: float = 0.72, min_series: int = 4, exclude_sets: Optional[str] = None, out: Optional[Path] = None,
+           all_languages: bool = False):
+    """Draw the stratified pilot sample from sets <prefix>:* and register it as document set <name>; writes <home>/<name>.tsv."""
+    from .pilot import draw_sample, register_sample, sample_summary, write_sample
+    s, cat = _ctx(home)
+    set_names = sorted(n for n in cat.set_names(prefix + ":"))
+    if not set_names:
+        raise typer.BadParameter(f"no document sets with prefix '{prefix}:' — run harvest-diseases first")
+    ex = tuple(x.strip() for x in exclude_sets.split(",")) if exclude_sets else ()
+    rows = draw_sample(cat, set_names, per_set=per_set, seed=seed, fulltext_share=fulltext_share, min_series=min_series,
+                       exclude_sets=ex, languages=None if all_languages else ("eng",))
+    dest = out or (s.home / f"{name}.tsv")
+    write_sample(rows, dest)
+    n = register_sample(cat, rows, name)
+    summ = sample_summary(rows)
+    summ.update({"set": name, "tsv": str(dest), "registered": n})
+    typer.echo(json.dumps(summ, indent=1))
+
+
+@app.command()
 def enrich(home: Optional[str] = None, all: bool = False, limit: Optional[int] = None):
     """Europe PMC enrichment: OA flag, licence, inEPMC, hasSuppl, PMCID."""
     from .harvest import enrich as _enrich
@@ -137,22 +190,27 @@ def enrich(home: Optional[str] = None, all: bool = False, limit: Optional[int] =
 
 
 @app.command()
-def fulltext(home: Optional[str] = None, tiers: str = "epmc,pmc,unpaywall,publisher", limit: Optional[int] = None, retry_failed: bool = False):
-    """Fetch full text in tiers for documents that have none yet."""
+def fulltext(home: Optional[str] = None, tiers: str = "epmc,pmc,unpaywall,publisher", limit: Optional[int] = None, retry_failed: bool = False,
+             only_set: Optional[str] = None):
+    """Fetch full text in tiers for documents that have none yet (--only-set restricts to a named document set)."""
     from .fulltext import fetch_all
     s, cat = _ctx(home)
     t = tuple(x.strip() for x in tiers.split(","))
-    _run(cat, "fulltext", {"tiers": t, "limit": limit, "retry_failed": retry_failed}, lambda: fetch_all(s, cat, t, limit, retry_failed))
+    _run(cat, "fulltext", {"tiers": t, "limit": limit, "retry_failed": retry_failed, "only_set": only_set},
+         lambda: fetch_all(s, cat, t, limit, retry_failed, only_set))
 
 
 @app.command()
 def prepare(home: Optional[str] = None, pmids: Optional[str] = None, where: str = "1=1", limit: Optional[int] = None,
+            only_set: Optional[str] = None,
             scope_description: str = "inborn errors of metabolism (inherited metabolic disorders), as classified under MONDO:0019052"):
-    """Render documents to work/<pmid>/input.md with prompts, ready for extraction."""
+    """Render documents to work/<pmid>/input.md with prompts, ready for extraction (--only-set: a named document set)."""
     from .extract.runner import prepare as _prep
     s, cat = _ctx(home)
     if pmids:
         ids = [p.strip() for p in pmids.split(",")]
+    elif only_set:
+        ids = cat.set_members(only_set)
     else:
         ids = [d["pmid"] for d in cat.iter_documents(where)]
         if limit:
@@ -197,6 +255,29 @@ def link(home: Optional[str] = None, min_score: float = 0.6):
 
 
 @app.command()
+def review_export(home: Optional[str] = None, out: Optional[Path] = None, only_set: Optional[str] = None, record_ids: Optional[str] = None,
+                  reviewers: str = "reviewer1", batch_size: int = 8, double_fraction: float = 0.25, seed: int = 1):
+    """Write human-review workbooks (one per reviewer batch) for extracted records: facts as rows, verdict dropdowns, paper text."""
+    from .review import export_review
+    s, cat = _ctx(home)
+    o = out or (s.home / "review")
+    ids = [r.strip() for r in record_ids.split(",")] if record_ids else None
+    _run(cat, "review-export", {"out": str(o), "only_set": only_set, "reviewers": reviewers, "batch_size": batch_size, "double_fraction": double_fraction, "seed": seed},
+         lambda: export_review(s, cat, o, ids, only_set, [r.strip() for r in reviewers.split(",") if r.strip()], batch_size, double_fraction, seed))
+
+
+@app.command()
+def review_import(home: Optional[str] = None, files: Optional[Path] = None, gold: Optional[Path] = None):
+    """Read filled review workbooks (a directory or one file) into gold/ and compute precision, recall, grounding, attribution and agreement."""
+    from .review import import_review
+    s, cat = _ctx(home)
+    src = files or (s.home / "review")
+    paths = sorted(src.glob("review_*.xlsx")) if src.is_dir() else [src]
+    g = gold or (s.home / "gold")
+    _run(cat, "review-import", {"files": [str(p) for p in paths], "gold": str(g)}, lambda: import_review(paths, g))
+
+
+@app.command()
 def export(home: Optional[str] = None, fmt: str = "both"):
     """Flat tables (csv/parquet) under export/."""
     from .export import export_all
@@ -213,6 +294,15 @@ def status(home: Optional[str] = None):
     st["work"] = {k: len(v) for k, v in pending(s).items()} if s.work_dir.exists() else {}
     st["home"] = str(s.home)
     typer.echo(json.dumps(st, indent=1))
+
+
+@app.command()
+def pmc_patients_overview(src: Path, home: Optional[str] = None, out: Optional[Path] = None, limit: Optional[int] = None):
+    """Tabular overview of the PMC-Patients dataset (JSON, JSON.gz or CSV): demographics, years, licences, diseases in titles, IEM hits."""
+    from .external.pmc_patients import build_overview
+    s, _ = _ctx(home)
+    o = out or (s.home / "external" / "pmc_patients_overview")
+    typer.echo(json.dumps(build_overview(src, o, s.ontologies, s.scope_dir, limit), indent=1))
 
 
 @app.command()

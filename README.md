@@ -70,6 +70,26 @@ analyte id with the small built-in lexicon — ChEBI names + VMH raise this), 31
 gene-grounded), 52 diagnoses (56 % auto-grounded), 18/18 valid phenopackets. See
 `docs/pilot-2026-09-10.md`.
 
+## Evaluation: pilot 2 (human-verified, ten IMDs)
+
+`docs/pilot2-protocol.md` is the design (ten diseases, stratified 25-document sample per disease, review
+workbooks, per-field precision/recall, agreement, decision rules); `docs/pilot2-runbook.md` is what to run.
+Commands: `count-diseases`, `harvest-diseases` (one PubMed query per disease → document sets `pilot2:<key>`),
+`sample` (→ set `pilot2-sample` + TSV), `fulltext/prepare --only-set`, `review-export` (one workbook per
+reviewer batch: Facts with verdict dropdowns, Missed, Record, Paper text), `review-import` (→ `gold/` +
+`metrics.md`). Triage manifests carry `document_type` and a per-individual `case_type` (prompt 0.3.0) so
+reporting bias is recorded.
+
+## External: PMC-Patients overview
+
+`casecorpus pmc-patients-overview PMC-Patients-V2.json.gz` streams the 250k-summary PMC-Patients
+dataset (CC BY-NC-SA 4.0) and writes `external/pmc_patients_overview/`: one row per summary
+(`patients.parquet` with the text, `patients.csv` without) plus demographics, approximate year
+(interpolated from the PMID), licence group, patients-per-article, summary length, diseases named in
+titles (lexical MONDO match) and IEM flags (scope disease in title or scope gene symbol in text).
+`python scripts/pmc_patients_workbook.py <overview_dir> <out.xlsx>` turns that into a workbook whose
+aggregates are formulas over the full table. Roughly 10 min for the overview, a minute for the workbook.
+
 ## Known limitations / next
 
 - Full-text coverage: only ~13 % of IEM case reports have PMC full text (25 % since 2010); the

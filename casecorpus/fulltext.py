@@ -158,10 +158,16 @@ class FullTextFetcher:
 
 
 def fetch_all(settings: Settings, cat: Catalogue, tiers: tuple[str, ...] = ("epmc", "pmc", "unpaywall", "publisher"),
-              limit: int | None = None, retry_failed: bool = False) -> dict[str, Any]:
+              limit: int | None = None, retry_failed: bool = False, only_set: str | None = None) -> dict[str, Any]:
+    """Fetch full text for documents that have none yet; only_set restricts to a named document set."""
     settings.ensure()
     f = FullTextFetcher(settings, cat)
-    docs = list(cat.iter_documents("fulltext_tier IS NULL OR fulltext_tier='abstract'"))
+    where = "(fulltext_tier IS NULL OR fulltext_tier='abstract')"
+    params: tuple = ()
+    if only_set:
+        where += " AND pmid IN (SELECT pmid FROM document_sets WHERE set_name=?)"
+        params = (only_set,)
+    docs = list(cat.iter_documents(where, params))
     if limit:
         docs = docs[:limit]
     stats: dict[str, int] = {t: 0 for t in tiers}

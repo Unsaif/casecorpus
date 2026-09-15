@@ -68,6 +68,7 @@ CREATE TABLE IF NOT EXISTS triage (
   n_individuals   INTEGER,
   individual_ids  TEXT,   -- JSON list of identifiers as used in the text
   is_rereport     INTEGER,
+  document_type   TEXT,
   reasons         TEXT,
   model           TEXT,
   prompt_version  TEXT,
@@ -98,6 +99,15 @@ CREATE TABLE IF NOT EXISTS links (
   PRIMARY KEY (record_a, record_b, relation)
 );
 
+CREATE TABLE IF NOT EXISTS document_sets (
+  pmid      TEXT NOT NULL,
+  set_name  TEXT NOT NULL,   -- e.g. pilot2:otc (harvest set) or pilot2-sample (drawn sample)
+  source    TEXT,            -- query / command that put it there
+  added_at  REAL,
+  PRIMARY KEY (pmid, set_name)
+);
+CREATE INDEX IF NOT EXISTS idx_document_sets_name ON document_sets(set_name);
+
 CREATE TABLE IF NOT EXISTS runs (
   run_id      TEXT PRIMARY KEY,
   command     TEXT,
@@ -117,6 +127,14 @@ class Catalogue:
         self.conn = sqlite3.connect(str(self.path))
         self.conn.row_factory = sqlite3.Row
         self.conn.executescript(SCHEMA)
+        self._migrate()
+
+    def _migrate(self) -> None:
+        """Add columns introduced after v0.1 to catalogues created earlier."""
+        cols = {r[1] for r in self.conn.execute("PRAGMA table_info(triage)")}
+        if "document_type" not in cols:
+            self.conn.execute("ALTER TABLE triage ADD COLUMN document_type TEXT")
+            self.conn.commit()
 
     # -- generic helpers ----------------------------------------------------
     @contextmanager
@@ -208,6 +226,26 @@ class Catalogue:
             d["validation"] = json.loads(d["validation"]) if d.get("validation") else []
             yield d
 
+    # -- named document sets (harvest sets, samples) --------------------------
+    def add_to_set(self, pmid: str, set_name: str, source: str | None = None) -> None:
+        with self.tx() as c:
+            c.execute("INSERT OR IGNORE INTO document_sets (pmid,set_name,source,added_at) VALUES (?,?,?,?)",
+                      (pmid, set_name, source, time.time()))
+
+    def set_members(self, set_name: str) -> list[str]:
+        return [r[0] for r in self.conn.execute("SELECT pmid FROM document_sets WHERE set_name=? ORDER BY pmid", (set_name,))]
+
+    def sets_of(self, pmid: str) -> list[str]:
+        return [r[0] for r in self.conn.execute("SELECT set_name FROM document_sets WHERE pmid=? ORDER BY set_name", (pmid,))]
+
+    def set_names(self, prefix: str | None = None) -> dict[str, int]:
+        q = "SELECT set_name, COUNT(*) FROM document_sets" + (" WHERE set_name LIKE ?" if prefix else "") + " GROUP BY set_name ORDER BY set_name"
+        return {r[0]: r[1] for r in self.conn.execute(q, (prefix + "%",) if prefix else ())}
+
+    def clear_set(self, set_name: str) -> int:
+        with self.tx() as c:
+            return c.execute("DELETE FROM document_sets WHERE set_name=?", (set_name,)).rowcount
+
     def add_link(self, a: str, b: str, relation: str, evidence: str, score: float) -> None:
         with self.tx() as c:
             c.execute("INSERT OR REPLACE INTO links VALUES (?,?,?,?,?)", (a, b, relation, evidence, score))
@@ -234,6 +272,7 @@ class Catalogue:
             "individuals": q("SELECT COUNT(*) FROM individuals").fetchone()[0],
             "individuals_valid": q("SELECT COUNT(*) FROM individuals WHERE valid=1").fetchone()[0],
             "links": q("SELECT COUNT(*) FROM links").fetchone()[0],
+            "sets": {r[0]: r[1] for r in q("SELECT set_name, COUNT(*) FROM document_sets GROUP BY set_name")},
         }
         return out
 
